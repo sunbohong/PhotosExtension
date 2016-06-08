@@ -20,20 +20,29 @@
  */
 + (PHFetchResult<PHAsset *> *)createdAssetsWithImage:(UIImage *)image shouldMoveToAppAssetCollection:(BOOL)shouldMoveToAppAssetCollection {
     __block NSString *createdAssetId = nil;
-    
+
     // 添加图片到【相机胶卷】
     [[PHPhotoLibrary sharedPhotoLibrary] performChangesAndWait:^{
-        createdAssetId = [PHAssetChangeRequest creationRequestForAssetFromImage:image].placeholderForCreatedAsset.localIdentifier;
-    } error:nil];
-    
+         createdAssetId = [PHAssetChangeRequest creationRequestForAssetFromImage:image].placeholderForCreatedAsset.localIdentifier;
+     } error:nil];
+
     if (createdAssetId == nil) return nil;
-    
-    // 在保存完毕后取出图片
-    PHFetchResult<PHAsset *> *fetchResult = [PHAsset fetchAssetsWithLocalIdentifiers:@[createdAssetId] options:nil];
-    if (shouldMoveToAppAssetCollection) {
-        PHAssetCollectionChangeRequest *request = [PHAssetCollectionChangeRequest changeRequestForAssetCollection:[PHAssetCollection appAssetCollection]];
-        [request insertAssets:fetchResult atIndexes:[NSIndexSet indexSetWithIndex:0]];
-    }
+
+
+    __block PHFetchResult<PHAsset *> *fetchResult;
+
+    PHAssetCollection *appAssetCollection = [PHAssetCollection appAssetCollection];
+
+    [[PHPhotoLibrary sharedPhotoLibrary] performChangesAndWait:^{
+
+         // 在保存完毕后取出图片
+         fetchResult = [PHAsset fetchAssetsWithLocalIdentifiers:@[createdAssetId] options:nil];
+         if (shouldMoveToAppAssetCollection) {
+             PHAssetCollectionChangeRequest *request = [PHAssetCollectionChangeRequest changeRequestForAssetCollection:appAssetCollection];
+             [request insertAssets:fetchResult atIndexes:[NSIndexSet indexSetWithIndex:0]];
+         }
+     } error:nil];
+
     return fetchResult;
 }
 
